@@ -1,17 +1,24 @@
 package com.example.shiro.controller;
 
+import javax.servlet.http.HttpSession;
+
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.authz.annotation.RequiresRoles;
 import org.apache.shiro.subject.Subject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.example.shiro.service.ShiroService;
+
 @RestController
 public class ShiroHandlerController {
 
+	
 	/**
 	 * 进入login页面
 	 * @return
@@ -54,6 +61,8 @@ public class ShiroHandlerController {
 		if(!subject.isAuthenticated()){
 			//3.若没有被认证，则把username和password封装称UsernamePasswordToken对像
 			UsernamePasswordToken token=new UsernamePasswordToken(username, password);
+			//设置记住我
+			token.setRememberMe(true);
 			//4.执行登录
 			try {
 				subject.login(token);
@@ -85,4 +94,29 @@ public class ShiroHandlerController {
 	public ModelAndView user(){
 		return new ModelAndView("user");
 	}
+	
+	@Autowired
+	private ShiroService shiroService;
+	
+	/**
+	 * 测试 权限注解
+	 * @return
+	 */
+	@RequestMapping("/testShiroAnnotation")
+	public ModelAndView testShiroAnnotation(HttpSession session){
+		session.setAttribute("key", "123456");
+		shiroService.testMethod();
+		return new ModelAndView("list");
+	}
+	
+//	/**
+//	 * 测试 权限注解  不起效果
+//	 * @return
+//	 */
+//	@RequiresRoles({"admin"})
+//	@RequestMapping("/testShiroAnnotation2")
+//	public ModelAndView testShiroAnnotation2(){
+//		System.out.println("Controller --- testShiroAnnotation2");
+//		return new ModelAndView("list");
+//	}
 }

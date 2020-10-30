@@ -24,7 +24,8 @@
 		   	 <ref bean="secondRealm"/>
 		   </list>	
         </property>
-        
+        <!-- 修改 rememberMe的过期时间，单位是秒-->
+        <property name="rememberMeManager.cookie.maxAge" value="10"></property>
     </bean>
 
     <!-- Let's use some enterprise caching support for better performance.  You can replace this with any enterprise
@@ -102,7 +103,10 @@
     5.启用IOC容器中使用shiro的注解。但是必须在配置了 LifecycleBeanPostProcessor之后才可以使用
     -->     
     <bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator"
-          depends-on="lifecycleBeanPostProcessor"/>
+          depends-on="lifecycleBeanPostProcessor">
+          <!-- 必须使用cglib方式为Action对象创建代理对象 -->
+          <property name="proxyTargetClass" value="true" />
+    </bean>      
     <bean class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">
         <property name="securityManager" ref="securityManager"/>
     </bean>
@@ -122,6 +126,8 @@
         <property name="loginUrl" value="/toLogin"/>
         <property name="successUrl" value="/list"/>
         <property name="unauthorizedUrl" value="/unauthorized"/>
+        <!-- 3.权限过滤栈 -->
+        <property name="filterChainDefinitionMap" ref="filterChainDefinitionMap"></property>
         <!-- 
                                 配置哪些页面需要受保护。
                                 以及访问这些页面需要的权限
@@ -130,7 +136,7 @@
            3)  logout:登出
            4)  roles 角色过滤器
          -->
-        <property name="filterChainDefinitions">
+        <!-- <property name="filterChainDefinitions">
             <value>
                 /toLogin = anon
                 /login = anon
@@ -142,7 +148,38 @@
                 # everything else requires authentication:
                 /** = authc
             </value>
-        </property>
+        </property> -->
     </bean>
+    
+    <!-- 配置一个bean,该bean实际上是一个map。通过实例工厂方法的方式 -->
+    <!-- 2.实例 -->
+    <bean id="filterChainDefinitionMap" factory-bean="filterChainDefinitionMapBuilder" factory-method="builderFilterChainDefinitionMap"></bean>
+    <!-- 1.实例工厂类 -->
+    <bean id="filterChainDefinitionMapBuilder" class="com.example.shiro.factory.FilterChainDefinitionMapBuilder"></bean>
+    
+    
+    <bean id="shiroService" class="com.example.shiro.service.ShiroService"></bean>
+    <!-- <bean id="shiroHandlerController" class="com.example.shiro.controller.ShiroHandlerController"></bean> -->
 
+<!--     Session ID 生成器
+    <bean id="sessionIdGenerator" class="org.apache.shiro.session.mgt.eis.JavaUuidSessionIdGenerator"></bean>
+
+    Session DAO. 继承EnterpriseCacheSessionDAO
+    <bean id="sessionDAO" class="com.example.shiro.session.MySessionDAO">
+       <property name="activeSessionsCacheName" value="shiro-activeSessionsCache"></property>
+       Session ID 生成器
+       <property name="sessionIdGenerator" value="sessionIdGenerator"></property>
+    </bean>
+    
+    会话管理器
+    <bean id="sessionManager" class="org.apache.shiro.session.mgt.DefaultSessionManager">
+       session 有效时间为半小时（毫秒单位）
+       <property name="globalSessionTimeout" value="1800000"></property>
+       是否删除无效的，默认开启
+       <property name="deleteInvalidSessions" value="true"></property>
+       是否开启 检测，默认开启
+       <property name="sessionValidationSchedulerEnabled" value="true"></property>
+       <property name="sessionDAO" ref="sessionDAO"></property>
+    </bean> -->
+    
 </beans>
